@@ -1,0 +1,55 @@
+<project name="filz" default="build">
+  <path id="cp">
+    <pathelement location="jackson-core-2.13.4.jar"/>
+    <pathelement location="jackson-databind-2.13.4.jar"/>
+    <pathelement location="jackson-annotations-2.13.4.jar"/>
+    <pathelement path="target"/>
+  </path>
+  <!--
+       the following can be overridden;
+       e.g. `ant -v run -Dcmdline.count=50`
+    -->
+  <property name="cmdline.count" value="5000"/>
+  <target name="build">
+    <!-- https://ant.apache.org/manual/Tasks/javac.html -->
+    <javac
+      includeantruntime="false"
+      srcdir="src"
+      destdir="target"
+      source="1.9"
+      target="1.9">
+      <classpath refid="cp"/>
+      <!--
+           https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-core/2.13.4/
+           https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/2.13.4/
+           https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.13.4/
+        -->
+    </javac>
+  </target>
+  <target name="pkg" depends="build">
+    <jar
+      destfile="Directory.jar"
+      basedir="target"
+      />
+  </target>
+  <target name="run" depends="build">
+    <tstamp>
+      <format
+	  property="DTSTAMP"
+	  pattern="yyyy-MM-dd_HHmm"/>
+    </tstamp>
+    <java
+	fork="true" classname="filz.Directory"
+	output="ant_run_${cmdline.count}_${DTSTAMP}.txt" >
+      <classpath refid="cp"/>
+      <arg value="${cmdline.count}"/>
+    </java>
+  </target>
+  <target name="clean">
+    <delete >
+      <fileset
+        dir="target"
+        includes="**/*" />
+    </delete>
+  </target>
+</project>

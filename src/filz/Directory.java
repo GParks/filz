@@ -289,7 +289,10 @@ public class Directory {
 	
 	protected static int iStop = 0;   // +1 = stop requested; -1 = stopped
 	public static void stop() {
-		iStop = 1;
+		if (iStop >= 0)
+			iStop = 1; 
+		else
+			System.err.println("  !! already stopped !!");
 	}
 	
 	/**

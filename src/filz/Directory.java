@@ -3,26 +3,20 @@ package filz;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-// import java.nio.file.Files;
 import java.nio.file.attribute.UserPrincipal;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-// import java.util.Iterator;
+import java.util.HashSet;
 
 // https://github.com/FasterXML/jackson
 // https://github.com/FasterXML/jackson-databind/
 
 // https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/
 
-// import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
-// import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-// import com.fasterxml.jackson.annotation.JsonView;
-// import com.fasterxml.jackson.*;
-// import com.fasterxml.jackson.annotation.*;
 
 class PathCount  {
 	protected String name;
@@ -88,13 +82,30 @@ public class Directory {
 		
 	}
 	
+	private Directory() {};
+	private static Directory mInst = null;
+	
+	public static Directory getDir() {
+		
+		if (null == mInst) {
+			mInst = new Directory();
+		}
+		return mInst;
+		
+	}
+	
+	
+	private HashSet<String> cps = new HashSet<String>();
 	private boolean add_path(String cp, int l) 
 	{
 		boolean retval = true;
 		
-		// I was going to check for dups here -- I may still do so, but maybe don't need to
-		pcs.add(new PathCount(cp, l));
-		
+		if (cps.contains(cp)) {
+			System.out.println("\t  Directory.add_path: the path counts already contains the canonical path " + cp);
+			retval = false;
+		} else {
+			pcs.add(new PathCount(cp, l));
+		}
 		return retval;
 	}
 	
@@ -102,12 +113,17 @@ public class Directory {
 	// I could (easily) make this an iterator
 	protected boolean subdirs() {
 		return 
-			subdirs(-1);
+			subdirs(-1, true);
 	}
 	
 	protected static final boolean bSkipUP = true;
-	
+
 	protected boolean subdirs(int limit) {
+		return 
+			subdirs(limit, false);
+	}
+
+	protected boolean subdirs(int limit, boolean bSkipFiles) {
 		boolean retval = false;
 		
 		if (!fDirs.isEmpty()) {
@@ -129,9 +145,11 @@ public class Directory {
 				// } else {
 					System.err.println("\t  list (of " + n + ") is null, but `listFiles` was NOT");
 				}
-				if (null != canonical_of_n)
-					add_path(canonical_of_n, -1);
-				else 
+				if (null != canonical_of_n) {
+					if (!add_path(canonical_of_n, -1)) {
+						System.out.println("\t    ... while adding '" + n + "' where `list` is null ");
+					}
+				} else 
 					System.err.println("\t  not adding " + n + " (with no length) due to prev. IOException");
 				// continue, anyway
 				retval = true;
@@ -140,9 +158,11 @@ public class Directory {
 			} else {
 				assert (ls.length == fs.length);
 				// the following works "breadth-first"
-				if (null != canonical_of_n)
-					add_path(canonical_of_n, fs.length);
-				else
+				if (null != canonical_of_n) {
+					if (!add_path(canonical_of_n, fs.length)) {
+						System.out.println("\t    ... while adding '" + n + "' where `list` has " + fs.length + " elt(s)");	
+					}
+				} else
 					System.err.println("\t  not adding " + n + ", " + fs.length + " due to prev. IOException");
 				
 				// 
@@ -151,7 +171,7 @@ public class Directory {
 				for(File f: fs) {
 					Path p = f.toPath();
 					boolean bAddSubs = !PathAction.check_path(f.toString());
-					System.out.println("\t DEBUG: bAddSubs for " + f + " = " + bAddSubs);
+					// System.out.println("\t DEBUG: bAddSubs for " + f + " = " + bAddSubs);
 					String cp_of_f = null;
 					try {
 						cp_of_f = f.getCanonicalPath();
@@ -191,7 +211,7 @@ public class Directory {
 							fDirs.add(f);							
 						}
 						
-					} else {
+					} else if (!bSkipFiles) {
 						System.out.println("  File: " + f + "; canonical name = \"" + cp_of_f  + "\", abs path = \"" + f.getAbsolutePath() + "\"" +
 								"; hidden? " + f.isHidden()  + sSymLink + sUserPrinc );
 					}					
@@ -267,6 +287,11 @@ public class Directory {
 		}
 	}
 	
+	protected static int iStop = 0;   // +1 = stop requested; -1 = stopped
+	public static void stop() {
+		iStop = 1;
+	}
+	
 	/**
 	 * main func.
 	 * first, it fails to get root or parent (though I'm leaving the code here);
@@ -277,13 +302,31 @@ public class Directory {
 	 * @param args - 1st cmd line arg. = count  (   0     --> test; 
 	 *                                           negative --> no limit)
 	 */
+	
+	public static int log_results()
+	{
+		int total = 0;
+		for (PathCount pc: Directory.getDir().pcs) {
+			System.out.println("  path \"" + pc.name + "\", \t  count = " + pc.count);
+			total += pc.count;
+		}
+		System.out.println("  total = " + total);
+
+		return total;
+	}
+	
+	
 	public static void main(String[] args) {
 
 		int limit = 50000;
+		boolean bSF = false;
 		
 		if (args.length > 0) {
 			limit = Integer.parseInt(args[0]);
 			System.out.println("first arg is " + args[0] + " (" + limit + ")");
+			if (args.length > 1) {
+				bSF = PathAction.string_to_bool(args[1]);
+			}
 		} // else {
 		// 	System.out.println("\t zero args");
 		// }
@@ -291,7 +334,7 @@ public class Directory {
 		if (0 == limit) {
 			test_path_act_compare();
 		} else {		
-			Directory dir = new Directory();
+			Directory dir = getDir();
 			File f = new File(".");
 			if (f.exists()) {
 				System.out.println(" file '.' exists");
@@ -301,22 +344,46 @@ public class Directory {
 			} else {
 				System.err.println("file '.' does NOT exist");
 			}
+
+
+			Runtime.getRuntime().addShutdownHook(new Thread() {
+				public void run() {
+					System.err.println("  shutdown hook");
+					Directory.stop();
+					while (iStop >= 0) {
+						System.err.println("  shutdown hook: waiting for iStopped");
+						try {
+							sleep(500);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					Directory.log_results();
+				}
+			});	
 			
+
 			// 
 			// heart of the code
 			//
 			dir.scan_filesystem();
 
-			while (dir.subdirs(limit)) {
-			
+			try {
+				iStop = 0;
+				while (dir.subdirs(limit, bSF) && iStop == 0) {
+					if (Thread.interrupted()) {
+						System.err.println("  main: interrupted!");
+						break;
+					}
+				}
+				iStop = -1;
+//			} catch (InterruptedException i) {
+//				System.err.println(" main: Interrupted - ");
+//				i.printStackTrace();
+			} catch (Exception e) {
+				System.err.println(" main: Exception = " + e);
 			}
-			
-			int total = 0;
-			for (PathCount pc: dir.pcs) {
-				System.out.println("  path \"" + pc.name + "\", \t  count = " + pc.count);
-				total += pc.count;
-			}
-			System.out.println("  total = " + total);
 		}
 	}
 

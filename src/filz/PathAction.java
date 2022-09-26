@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.LinkedHashMap;
-import java.util.Set;
+// import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -41,7 +41,26 @@ public class PathAction implements Comparable<String> {
 	public int compareTo(String s) {
 		return filename.compareTo(s);
 	}
-	
+
+	/**
+	 * public utility method to parse booleans "my way"
+	 * (the below code does not use this, because I want to [manually] check null values there,
+	 *   and report that situation)
+	 * @param s
+	 * @return T/F (default to false)
+	 */
+	public static boolean string_to_bool(String s) {
+		boolean retval = false;
+		if (null != s && s.length() > 0) {
+			if (s.substring(0,1).toLowerCase().equals("t") 
+					||  s.substring(0,1).toLowerCase().equals("y") 
+					||  s.equals("1")) {
+				retval = true;
+			}
+		}		
+		return retval;
+	}
+
 	/**
 	 * the following (two) member vars and the check_path method implement the "exposed" operations of this
 	 */

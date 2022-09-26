@@ -10,7 +10,7 @@
        e.g. `ant -v run -Dcmdline.count=50`
     -->
   <property name="cmdline.count" value="5000"/>
-  <target name="build">
+  <target name="compile">
     <!-- https://ant.apache.org/manual/Tasks/javac.html -->
     <javac
       includeantruntime="false"
@@ -26,13 +26,13 @@
         -->
     </javac>
   </target>
-  <target name="pkg" depends="build">
+  <target name="pkg" depends="compile">
     <jar
       destfile="Directory.jar"
       basedir="target"
       />
   </target>
-  <target name="run" depends="build">
+  <target name="run" depends="compile">
     <tstamp>
       <format
 	  property="DTSTAMP"
@@ -43,15 +43,16 @@
       	output="ant_run_${cmdline.count}_${DTSTAMP}.txt" >
       <classpath refid="cp"/>
       <arg value="${cmdline.count}"/>
+      <arg value="T"/>
     </java>
   </target>
-  <target name="stdout" depends="build">
+  <target name="stdout" depends="compile">
     <tstamp>
       <format
 	  property="DTSTAMP"
 	  pattern="yyyy-MM-dd_HHmm"/>
     </tstamp>
-    <java fork="true" classname="filz.Directory">
+    <java fork="true"  classname="filz.Directory">
       <classpath refid="cp"/>
       <arg value="${cmdline.count}"/>
     </java>

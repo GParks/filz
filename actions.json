@@ -1,7 +1,6 @@
 [
-  {"name": "/opt", "skip": "true"},
   {"name": "/Volumes/Macintosh HD", "skip": "true"},
-  {"name": "/System/Volumes/Data/home", "skip": "false"},
+  {"name": "/System/Volumes/Data/home", "skip": "true"},
   {"name": "/System/Volumes/Data/Network", "skip": "false"},
   {"name": "/private/etc", "skip": "false"},
   {"name": "/private/var", "skip": "false"},

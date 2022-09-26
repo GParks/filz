@@ -3,26 +3,26 @@ package filz;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Files;
+// import java.nio.file.Files;
 import java.nio.file.attribute.UserPrincipal;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Iterator;
+// import java.util.Iterator;
 
 // https://github.com/FasterXML/jackson
 // https://github.com/FasterXML/jackson-databind/
 
 // https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/
 
-import com.fasterxml.jackson.core.JsonGenerationException;
+// import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.type.TypeReference;
+// import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.annotation.JsonView;
+// import com.fasterxml.jackson.annotation.JsonView;
 // import com.fasterxml.jackson.*;
-import com.fasterxml.jackson.annotation.*;
+// import com.fasterxml.jackson.annotation.*;
 
 class PathCount  {
 	protected String name;
@@ -36,10 +36,6 @@ class PathCount  {
 public class Directory {
 
 	// protected static String[] ss = {"Greg", "was", "here"};
-	
-	// https://docs.oracle.com/javase/8/docs/technotes/guides/collections/overview.html
-	
-	protected ArrayList<PathAction> pas = PathAction.getConfig("actions.json");
 	
 	protected Path root_or_parent(Path p) {
 		Path retval = null;
@@ -68,6 +64,9 @@ public class Directory {
 	}
 	
 	protected Path p_fs_root = null;
+	/**
+	 * fDirs = "open list" of directories
+	 */
 	protected ArrayDeque<File> fDirs = new ArrayDeque<File>();
 	
 	protected ArrayList<PathCount> pcs = new ArrayList<PathCount>();
@@ -89,7 +88,7 @@ public class Directory {
 		
 	}
 	
-	private boolean add_new_path(String cp, int l) 
+	private boolean add_path(String cp, int l) 
 	{
 		boolean retval = true;
 		
@@ -99,45 +98,14 @@ public class Directory {
 		return retval;
 	}
 	
-	private java.util.HashMap<String, Boolean> mSkips = new java.util.HashMap<String, Boolean>();
-
-	/**
-	 * 
-	 * @param n
-	 * @return boolean: should this (sub-directory/path) be skipped 
-	 */	
-	public boolean check_path(String n)
-	{
-		boolean retval = false;  // default to "don't skip"
-		
-		if (mSkips.containsKey(n)) {
-			retval = mSkips.get(n);
-		} else {
-			Iterator<PathAction> i = pas.iterator();
-			boolean bCont = i.hasNext();
-			while (bCont) {
-				PathAction x = i.next();
-				if (x.equals(n)) {
-					retval = x.bSkip;
-					bCont = false;
-				} else {
-					bCont = i.hasNext();
-				}
-				// "cache" the result, so next lookup is faster!
-				mSkips.put(n, retval);
-			}
-		}
-		
-		return retval;
-	}
-
-	
 	
 	// I could (easily) make this an iterator
 	protected boolean subdirs() {
 		return 
 			subdirs(-1);
 	}
+	
+	protected static final boolean bSkipUP = true;
 	
 	protected boolean subdirs(int limit) {
 		boolean retval = false;
@@ -151,7 +119,7 @@ public class Directory {
 			 try {
 				 canonical_of_n = n.getCanonicalPath();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				System.err.println("\t  subdirs: IO exc. getting canonical path:");
 				e.printStackTrace();
 			}
 
@@ -159,54 +127,75 @@ public class Directory {
 				if (null != fs) {
 					// System.err.println("\t  list [String] and l. of files (of " + n + ") both null");					
 				// } else {
-					System.err.println("\t  list (of " + n + ") is null,, but `listFiles` was NOT");
+					System.err.println("\t  list (of " + n + ") is null, but `listFiles` was NOT");
 				}
 				if (null != canonical_of_n)
-					// pcs.add(new PathCount(canonical_of_n, -1));
-					add_new_path(canonical_of_n, -1);
+					add_path(canonical_of_n, -1);
 				else 
 					System.err.println("\t  not adding " + n + " (with no length) due to prev. IOException");
 				// continue, anyway
 				retval = true;
 			} else if (null == fs) {
-				System.err.println("\t  list of files (of " + n + ") is null");
+				System.err.println("\t  ** list of files (of " + n + ") is null ** ");
 			} else {
 				assert (ls.length == fs.length);
 				// the following works "breadth-first"
 				if (null != canonical_of_n)
-					// pcs.add(new PathCount(canonical_of_n, fs.length));
-					add_new_path(canonical_of_n, fs.length);
+					add_path(canonical_of_n, fs.length);
 				else
 					System.err.println("\t  not adding " + n + ", " + fs.length + " due to prev. IOException");
 				
+				// 
+				// loop over all files in this directory
+				// 
 				for(File f: fs) {
 					Path p = f.toPath();
-					boolean bAddSubs = !check_path(f.toString());
+					boolean bAddSubs = !PathAction.check_path(f.toString());
+					System.out.println("\t DEBUG: bAddSubs for " + f + " = " + bAddSubs);
 					String cp_of_f = null;
 					try {
 						cp_of_f = f.getCanonicalPath();
 					} catch (IOException io) {
 						System.err.println("    IOException getting canonical path for " + f);
 					}
-					
-					System.out.println(" f = " + f + "; canonical name = \"" + cp_of_f  + "\", abs path = \"" + f.getAbsolutePath() + "\"" +
-							"  isDir: " + f.isDirectory() + "; hidden? " + f.isHidden() + "  - 'normal?' " + f.isFile() );
+					String sSymLink = "";
 					if ( java.nio.file.Files.isSymbolicLink(p) ) {
-						System.out.println("\t nio reports this is sym link!");
-					}
-					try {
-						UserPrincipal up = java.nio.file.Files.getOwner(p, java.nio.file.LinkOption.NOFOLLOW_LINKS);
-						System.out.println("\t user principal: name = " + up.getName() + ", \"" + up + "\"");
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						sSymLink = "\n\t nio reports this is sym link!";
+					} else if (!bSkipUP) {
+						sSymLink = "\n\t";
 					}
 					
+					String sUserPrinc = null;
+					if (bSkipUP) {
+						sUserPrinc = "";
+					} else {
+						sUserPrinc = "NO USER PRICIPAL";
+						try {
+							UserPrincipal up = java.nio.file.Files.getOwner(p, java.nio.file.LinkOption.NOFOLLOW_LINKS);
+							sUserPrinc = "\t user principal: name = \""  + up + "\"";
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}					 
 					
-					if (f.isDirectory() && bAddSubs) {
-						// System.out.println("    adding directory " + f);
-						fDirs.add(f);
-					}
+					boolean bIsDir = f.isDirectory();
+					boolean bNormal = f.isFile();
+					assert ( (bIsDir || bNormal) && !(bIsDir && bNormal) );
+					if (bIsDir) {
+						// experience has shown that isDir  --> !isFile 
+						System.out.println("  Directory: " + f + "; canonical name = \"" + cp_of_f  + "\", abs path = \"" + f.getAbsolutePath() + "\"" +
+								"; hidden? " + f.isHidden()  + sSymLink + sUserPrinc );
+						if (bAddSubs) {
+							// System.out.println("    adding directory " + f);
+							fDirs.add(f);							
+						}
+						
+					} else {
+						System.out.println("  File: " + f + "; canonical name = \"" + cp_of_f  + "\", abs path = \"" + f.getAbsolutePath() + "\"" +
+								"; hidden? " + f.isHidden()  + sSymLink + sUserPrinc );
+					}					
+					
 				}
 				System.out.println("  - now " + fDirs.size() + " sub-dir(s)");
 				retval = true;
@@ -216,7 +205,7 @@ public class Directory {
 				}
 			}
 		} else {
-			System.out.println("\t subdirs: fDirs isEmpty");
+			System.out.println("\t subdirs: fDirs isEmpty - done!");
 		}
 		return retval;
 	}
@@ -243,6 +232,10 @@ public class Directory {
 //		
 //	}
 
+	protected static void test_path_act_compare() {
+		PathAction.check_path("/Volumes/Macintosh HD");
+	}
+	
 	@SuppressWarnings("rawtypes")
 	protected static void test_json_reader() {
 		ObjectMapper mapper = new ObjectMapper();
@@ -274,7 +267,16 @@ public class Directory {
 		}
 	}
 	
-	
+	/**
+	 * main func.
+	 * first, it fails to get root or parent (though I'm leaving the code here);
+	 * then:  
+	 * `scan_filesystem`
+	 * `while (dir.subdirs(limit))`
+	 * 
+	 * @param args - 1st cmd line arg. = count  (   0     --> test; 
+	 *                                           negative --> no limit)
+	 */
 	public static void main(String[] args) {
 
 		int limit = 50000;
@@ -287,7 +289,7 @@ public class Directory {
 		// }
 		
 		if (0 == limit) {
-			test_json_reader();
+			test_path_act_compare();
 		} else {		
 			Directory dir = new Directory();
 			File f = new File(".");
@@ -299,11 +301,16 @@ public class Directory {
 			} else {
 				System.err.println("file '.' does NOT exist");
 			}
+			
+			// 
+			// heart of the code
+			//
 			dir.scan_filesystem();
-			// boolean m = dir.subdirs();
+
 			while (dir.subdirs(limit)) {
 			
 			}
+			
 			int total = 0;
 			for (PathCount pc: dir.pcs) {
 				System.out.println("  path \"" + pc.name + "\", \t  count = " + pc.count);

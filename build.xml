@@ -39,8 +39,19 @@
 	  pattern="yyyy-MM-dd_HHmm"/>
     </tstamp>
     <java
-	fork="true" classname="filz.Directory"
-	output="ant_run_${cmdline.count}_${DTSTAMP}.txt" >
+      	fork="true" classname="filz.Directory"
+      	output="ant_run_${cmdline.count}_${DTSTAMP}.txt" >
+      <classpath refid="cp"/>
+      <arg value="${cmdline.count}"/>
+    </java>
+  </target>
+  <target name="stdout" depends="build">
+    <tstamp>
+      <format
+	  property="DTSTAMP"
+	  pattern="yyyy-MM-dd_HHmm"/>
+    </tstamp>
+    <java fork="true" classname="filz.Directory">
       <classpath refid="cp"/>
       <arg value="${cmdline.count}"/>
     </java>

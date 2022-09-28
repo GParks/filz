@@ -4,3 +4,5 @@
 ant_run*.txt
 *.class
 sorted_dup_paths.txt
+*.gz
+cmp_yesterday_thisPM.txt

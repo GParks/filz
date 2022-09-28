@@ -10,6 +10,7 @@
        e.g. `ant -v run -Dcmdline.count=50`
     -->
   <property name="cmdline.count" value="5000"/>
+  <!-- https://ant.apache.org/manual/Tasks/property.html -->
   <target name="compile">
     <!-- https://ant.apache.org/manual/Tasks/javac.html -->
     <javac
@@ -62,6 +63,9 @@
       <fileset
         dir="target"
         includes="**/*" />
+      <fileset
+        dir="src"
+        includes="**/*.class"/>
     </delete>
   </target>
 </project>

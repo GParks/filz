@@ -1,9 +1,20 @@
 [
-  {"name": "/Volumes/Macintosh HD", "skip": "true"},
-  {"name": "/System/Volumes/Data/home", "skip": "true"},
-  {"name": "/System/Volumes/Data/Network", "skip": "false"},
-  {"name": "/private/etc", "skip": "false"},
-  {"name": "/private/var", "skip": "false"},
-  {"name": "/private/tmp", "skip": "false"},
-  {"name": "/System/Volumes/Data/Network/Servers", "skip": "false"}
+  {"path": "/Volumes/Macintosh HD", "skip": "true"},
+  {"path": "/System/Volumes/Data", "skip": "true"},
+  {"path": "/private/etc", "skip": "false"},
+  {"name": "*.app", "skip": "true"},
+  { "name" : ".git",
+    "skip" : "true",
+    "action" :
+      "git config --get remote.origin.url" },
+  { "path": "/Applications/Microsoft Teams.app/Contents/Frameworks/Microsoft Teams Helper (Plugin).app",
+    "skip": "true"},
+  { "path": "/Applications/Microsoft Teams.app/Contents/Frameworks/Microsoft Teams Helper (Renderer).app/Contents/Frameworks/Microsoft Teams Helper.app",
+    "skip": "true"},
+  { "path": "/Applications/Microsoft Teams.app/Contents/Frameworks/Microsoft Teams Helper.app/Contents/Frameworks/Microsoft Teams Helper (Renderer).app",
+    "skip": "true"},
+  { "path": "/Applications/Microsoft Teams.app/Contents/Frameworks/Microsoft Teams Helper.app/Contents/Frameworks/Microsoft Teams Helper (GPU).app",
+    "skip": "true"},
+  { "path": "/Applications/Microsoft Teams.app/Contents/Frameworks/Microsoft Teams Helper (Renderer).app/Contents/Frameworks/Microsoft Teams Helper (GPU).app",
+    "skip": "true"}
 ]

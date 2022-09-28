@@ -29,17 +29,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * (I could re-implement this to put 'everything' in the HashMap at load time  
  */
 public class PathAction implements Comparable<String> {
-	protected String filename;  // *NOT* canonical name, but the "default" string value ...
+	protected String full_path;  // *NOT* canonical name, but the "default" string value ...
+	protected String name_pattern;
 	protected boolean bSkip;
 
-	protected PathAction(String n, boolean sk) {
-		filename = n;
+	protected PathAction(String p, String m, boolean sk) {
+		full_path = p;
+		name_pattern = m;
 		bSkip = sk;
 	}
 	
 	@Override
 	public int compareTo(String s) {
-		return filename.compareTo(s);
+		if (null == full_path)
+			return -9;
+		return full_path.compareTo(s);
 	}
 
 	/**
@@ -69,6 +73,8 @@ public class PathAction implements Comparable<String> {
 	
 	private static java.util.HashMap<String, Boolean> mSkips = new java.util.HashMap<String, Boolean>();
 
+	protected static final int N_DBG_LVL = 4;
+	
 	/**
 	 * 
 	 * @param n
@@ -76,10 +82,15 @@ public class PathAction implements Comparable<String> {
 	 */	
 	public static boolean check_path(String n)
 	{
-		// System.out.println("\t   DEBUG: pas is " + pas.size() + " element(s)");
+		if (N_DBG_LVL > 8) {
+			System.out.println("\t    check_path: DEBUG: pas is " + pas.size() + " element(s)");
+		}
 		boolean retval = false;  // default to "don't skip"
 		if (mSkips.containsKey(n)) {
 			retval = mSkips.get(n);
+			if (N_DBG_LVL > 6) {
+				System.out.println("\t    check_path: found " + n + ", returning " + retval);
+			}
 		} else {
 			Iterator<PathAction> i = pas.iterator();
 			boolean bCont = i.hasNext();
@@ -87,6 +98,10 @@ public class PathAction implements Comparable<String> {
 				PathAction x = i.next();
 				if (x.compareTo(n) == 0) {
 					retval = x.bSkip;
+					if (N_DBG_LVL > 6) {
+						System.out.println("\t    check_path: compare matched, " + n + " = " + x.full_path +  
+											", returning " + retval);
+					}
 					bCont = false;
 				} else {
 					bCont = i.hasNext();
@@ -94,6 +109,10 @@ public class PathAction implements Comparable<String> {
 				// "cache" the result, so next lookup is faster!
 				mSkips.put(n, retval);
 			}
+			if (N_DBG_LVL > 6) {
+				System.out.println("\t      check_path: (adding value for, " + n + ", r. " + retval + ")");
+			}
+
 		}
 		
 		return retval;
@@ -113,6 +132,9 @@ public class PathAction implements Comparable<String> {
 		ArrayList<PathAction> retval = new ArrayList<PathAction>();
 		ObjectMapper mapper = new ObjectMapper();
 
+		if (N_DBG_LVL > 3) {
+			System.out.println("\t    PathAction.getConfig starting");
+		}
 		/* 
 		 * this worked for an empty list (i.e. "[]")
 		 */
@@ -125,7 +147,8 @@ public class PathAction implements Comparable<String> {
 				// 	Object v = lhm.get(k);
 				// 	System.out.println("\t PathAction.getConfig: key " + k + " = " + v);
 				// }
-				String name = (String)(lhm.get("name"));
+				String path = (String)(lhm.get("path"));
+				String match = (String)(lhm.get("name"));  // may be wildcard
 				boolean sk = true;
 				String s = (String)(lhm.get("skip"));
 				if (s != null) {
@@ -136,14 +159,15 @@ public class PathAction implements Comparable<String> {
 						sk = false;
 					}
 				} else {
-					System.err.println("\t ** PathAction: `get` skip was NULL for " + name);
+					System.err.println("\t ** PathAction: `get` skip was NULL for " + path);
 				}
-				PathAction pa = new PathAction(name, sk);
+				PathAction pa = new PathAction(path, match, sk);
 				retval.add(pa);
 			}
 			
 		} catch (JsonParseException e) {
 			System.err.println(" PathAction.getConfig: JSON parse exception: " + e.getLocalizedMessage());
+			System.err.println("    ** NO 'actions.json' config loaded ** ");
 		} catch (JsonMappingException e) {
 			System.err.println(" PathAction.getConfig: JSON mapping exc.: " + e.getLocalizedMessage());
 		} catch (IOException e) {

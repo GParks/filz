@@ -201,19 +201,34 @@ public class Directory {
 					
 					boolean bIsDir = f.isDirectory();
 					boolean bNormal = f.isFile();
+					String str = f.toString();
+					StringBuffer sBuff = new StringBuffer(str);
+					if (!str.equals(cp_of_f)) {
+						sBuff.append("; canonical name = \"" + cp_of_f + "\"");
+					}
+					String abs_path = f.getAbsolutePath();
+					assert(abs_path.equals(str));
+					
+					String[] sParts = str.split("/");
+					
+					if (f.isHidden()) {
+						sBuff.append("; hidden!");
+					}
+					
+					sBuff.append("  [" + sParts.length +  " part(s) of the (path) name]");
+					
 					assert ( (bIsDir || bNormal) && !(bIsDir && bNormal) );
+					
 					if (bIsDir) {
 						// experience has shown that isDir  --> !isFile 
-						System.out.println("  Directory: " + f + "; canonical name = \"" + cp_of_f  + "\", abs path = \"" + f.getAbsolutePath() + "\"" +
-								"; hidden? " + f.isHidden()  + sSymLink + sUserPrinc );
+						System.out.println("  Directory: " + sBuff  + sSymLink + sUserPrinc );
 						if (bAddSubs) {
 							// System.out.println("    adding directory " + f);
 							fDirs.add(f);							
 						}
 						
 					} else if (!bSkipFiles) {
-						System.out.println("  File: " + f + "; canonical name = \"" + cp_of_f  + "\", abs path = \"" + f.getAbsolutePath() + "\"" +
-								"; hidden? " + f.isHidden()  + sSymLink + sUserPrinc );
+						System.out.println("  File: " + sBuff + sSymLink + sUserPrinc );
 					}					
 					
 				}
@@ -291,8 +306,8 @@ public class Directory {
 	public static void stop() {
 		if (iStop >= 0)
 			iStop = 1; 
-		else
-			System.err.println("  !! already stopped !!");
+		// else
+		// 	System.err.println("  !! already stopped !!");
 	}
 	
 	/**
@@ -308,13 +323,22 @@ public class Directory {
 	
 	public static int log_results()
 	{
+		Directory d = Directory.getDir();
 		int total = 0;
-		for (PathCount pc: Directory.getDir().pcs) {
-			System.out.println("  path \"" + pc.name + "\", \t  count = " + pc.count);
-			total += pc.count;
+		for (PathCount pc: d.pcs) {
+			int c = pc.count;
+			System.out.println("  path \"" + pc.name + "\", \t  count = " + c);
+			if (c > 0) {
+				total += c;
+			}
 		}
 		System.out.println("  total = " + total);
 
+		while (!d.fDirs.isEmpty()) {
+			File f = d.fDirs.pop();
+			System.out.println(" remaining dir: " + f);
+		}
+		
 		return total;
 	}
 	
@@ -351,7 +375,7 @@ public class Directory {
 
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 				public void run() {
-					System.err.println("  shutdown hook");
+					System.err.println("  shutting down...");
 					Directory.stop();
 					while (iStop >= 0) {
 						System.err.println("  shutdown hook: waiting for iStopped");
@@ -386,6 +410,7 @@ public class Directory {
 //				i.printStackTrace();
 			} catch (Exception e) {
 				System.err.println(" main: Exception = " + e);
+				iStop = -1;
 			}
 		}
 	}

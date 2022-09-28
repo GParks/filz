@@ -138,13 +138,13 @@ public class Directory {
 				System.err.println("\t  subdirs: IO exc. getting canonical path:");
 				e.printStackTrace();
 			}
-
+            
+			assert(fs != null);
+			 
 			if (null == ls) {
-				if (null != fs) {
-					// System.err.println("\t  list [String] and l. of files (of " + n + ") both null");					
-				// } else {
-					System.err.println("\t  list (of " + n + ") is null, but `listFiles` was NOT");
-				}
+				// if (null != fs) {
+				// 	System.err.println("\t  list (of " + n + ") is null, but `listFiles` was NOT");
+				// }
 				if (null != canonical_of_n) {
 					if (!add_path(canonical_of_n, -1)) {
 						System.out.println("\t    ... while adding '" + n + "' where `list` is null ");
@@ -153,8 +153,8 @@ public class Directory {
 					System.err.println("\t  not adding " + n + " (with no length) due to prev. IOException");
 				// continue, anyway
 				retval = true;
-			} else if (null == fs) {
-				System.err.println("\t  ** list of files (of " + n + ") is null ** ");
+			// } else if (null == fs) {
+				// System.err.println("\t  ** list of files (of " + n + ") is null ** ");
 			} else {
 				assert (ls.length == fs.length);
 				// the following works "breadth-first"
@@ -219,9 +219,23 @@ public class Directory {
 					
 					assert ( (bIsDir || bNormal) && !(bIsDir && bNormal) );
 					
+					// 
+					// heart of the fn. - here's a good place for a lambda (or two)
 					if (bIsDir) {
 						// experience has shown that isDir  --> !isFile 
 						System.out.println("  Directory: " + sBuff  + sSymLink + sUserPrinc );
+						System.out.print("     [");
+						boolean b1st = true;
+						for(String i: sParts) {
+							if (b1st) {
+								System.out.print("\"" + i + "\"");
+								assert(i.length() == 0);
+								b1st = false;
+							} else {
+								System.out.print(", \"" + i + "\"");
+							}
+						}
+						System.out.println("]");
 						if (bAddSubs) {
 							// System.out.println("    adding directory " + f);
 							fDirs.add(f);							
@@ -232,7 +246,7 @@ public class Directory {
 					}					
 					
 				}
-				System.out.println("  - now " + fDirs.size() + " sub-dir(s)");
+				// System.out.println("  - now " + fDirs.size() + " sub-dir(s)");
 				retval = true;
 				if (limit >= 0) {
 					if (fDirs.size() > limit)
@@ -345,7 +359,7 @@ public class Directory {
 	
 	public static void main(String[] args) {
 
-		int limit = 50000;
+		int limit = 200000;
 		boolean bSF = false;
 		
 		if (args.length > 0) {

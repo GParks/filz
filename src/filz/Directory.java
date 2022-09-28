@@ -215,7 +215,7 @@ public class Directory {
 						sBuff.append("; hidden!");
 					}
 					
-					sBuff.append("  [" + sParts.length +  " part(s) of the (path) name]");
+					sBuff.append("  [" + sParts.length +  " part(s) of the name]");
 					
 					assert ( (bIsDir || bNormal) && !(bIsDir && bNormal) );
 					

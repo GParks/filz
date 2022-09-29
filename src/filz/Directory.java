@@ -94,17 +94,21 @@ public class Directory {
 		
 	}
 	
-	
+	protected static final int N_DBG_LVL = 4;
+
 	private HashSet<String> cps = new HashSet<String>();
 	private boolean add_path(String cp, int l) 
 	{
 		boolean retval = true;
 		
 		if (cps.contains(cp)) {
-			System.out.println("\t  Directory.add_path: the path counts already contains the canonical path " + cp);
+			if (N_DBG_LVL > 5) {
+				System.out.println("\t  Directory.add_path: the path counts already contains the canonical path " + cp);
+			}
 			retval = false;
 		} else {
 			pcs.add(new PathCount(cp, l));
+			cps.add(cp);
 		}
 		return retval;
 	}
@@ -141,16 +145,25 @@ public class Directory {
             
 			assert(fs != null);
 			 
+			if (null != canonical_of_n) {
+				int l = -1;
+				if (fs != null) {
+					l = fs.length;
+				} else {
+					System.err.println("  subdirs: fs is null, though the assert above 'passed'");
+				}
+				if (!add_path(canonical_of_n, l)) {
+					if (N_DBG_LVL > 5) {
+						System.out.println("\t    ... while adding '" + n + "'" );
+					}
+				}
+			} else 
+				System.err.println("\t  not adding " + n + " due to prev. IOException");
+
 			if (null == ls) {
 				// if (null != fs) {
 				// 	System.err.println("\t  list (of " + n + ") is null, but `listFiles` was NOT");
 				// }
-				if (null != canonical_of_n) {
-					if (!add_path(canonical_of_n, -1)) {
-						System.out.println("\t    ... while adding '" + n + "' where `list` is null ");
-					}
-				} else 
-					System.err.println("\t  not adding " + n + " (with no length) due to prev. IOException");
 				// continue, anyway
 				retval = true;
 			// } else if (null == fs) {
@@ -158,12 +171,6 @@ public class Directory {
 			} else {
 				assert (ls.length == fs.length);
 				// the following works "breadth-first"
-				if (null != canonical_of_n) {
-					if (!add_path(canonical_of_n, fs.length)) {
-						System.out.println("\t    ... while adding '" + n + "' where `list` has " + fs.length + " elt(s)");	
-					}
-				} else
-					System.err.println("\t  not adding " + n + ", " + fs.length + " due to prev. IOException");
 				
 				// 
 				// loop over all files in this directory
@@ -180,7 +187,7 @@ public class Directory {
 					}
 					String sSymLink = "";
 					if ( java.nio.file.Files.isSymbolicLink(p) ) {
-						sSymLink = "\n\t nio reports this is sym link!";
+						sSymLink = "  \t  \t  sym link!";
 					} else if (!bSkipUP) {
 						sSymLink = "\n\t";
 					}
@@ -215,7 +222,7 @@ public class Directory {
 						sBuff.append("; hidden!");
 					}
 					
-					sBuff.append("  [" + sParts.length +  " part(s) of the name]");
+					sBuff.append("  [depth = " + (sParts.length -1) +  "]");
 					
 					assert ( (bIsDir || bNormal) && !(bIsDir && bNormal) );
 					
@@ -224,18 +231,18 @@ public class Directory {
 					if (bIsDir) {
 						// experience has shown that isDir  --> !isFile 
 						System.out.println("  Directory: " + sBuff  + sSymLink + sUserPrinc );
-						System.out.print("     [");
-						boolean b1st = true;
-						for(String i: sParts) {
-							if (b1st) {
-								System.out.print("\"" + i + "\"");
-								assert(i.length() == 0);
-								b1st = false;
-							} else {
-								System.out.print(", \"" + i + "\"");
-							}
-						}
-						System.out.println("]");
+						// System.out.print("     [");
+						// boolean b1st = true;
+						// for(String i: sParts) {
+						//     if (b1st) {
+						//         System.out.print("\"" + i + "\"");
+						//        assert(i.length() == 0);
+						//        b1st = false;
+						//    } else {
+						//        System.out.print(", \"" + i + "\"");
+						//    }
+						// }
+						// System.out.println("]");
 						if (bAddSubs) {
 							// System.out.println("    adding directory " + f);
 							fDirs.add(f);							

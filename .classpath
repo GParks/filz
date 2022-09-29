@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" output="target" path="src"/>
+	<classpathentry kind="var" path="JRE_LIB" rootpath="JRE_SRCROOT" sourcepath="JRE_SRC"/>
+	<classpathentry kind="lib" path="/Users/gparks1/workspace/eclipse/filz/jackson-core-2.13.4.jar"/>
+	<classpathentry kind="lib" path="/Users/gparks1/workspace/eclipse/filz/jackson-databind-2.13.4.jar"/>
+	<classpathentry kind="lib" path="/Users/gparks1/workspace/eclipse/filz/jackson-annotations-2.13.4.jar"/>
+	<classpathentry kind="con" path="/Users/gparks1/workspace/eclipse/filz/target"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
